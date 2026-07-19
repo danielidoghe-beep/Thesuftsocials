@@ -76,13 +76,77 @@ registerBtn.addEventListener("click", () => {
     registerBtn.innerHTML = "Creating account...";
     registerBtn.disabled = true;
 
-    // Firebase registration will be added in Part 4
+    try {
 
-    setTimeout(() => {
+    // Create the account
+    const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+    );
 
-        window.location.href = "dashboard.html";
+    const user = userCredential.user;
 
-    }, 1500);
+    // Save the user's profile
+    await setDoc(doc(db, "users", user.uid), {
+
+        uid: user.uid,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+
+        wallet: 0,
+
+        createdAt: serverTimestamp()
+
+    });
+
+    // Create the welcome notification
+    await addDoc(
+        collection(db, "users", user.uid, "notifications"),
+        {
+
+            title: "Welcome to TheSuftSocials",
+
+            message:
+            "Your account has been created successfully. Start exploring our services.",
+
+            read: false,
+
+            createdAt: serverTimestamp()
+
+        }
+    );
+
+    // Go to dashboard
+    window.location.href = "dashboard.html";
+
+} catch (error) {
+
+    registerBtn.disabled = false;
+
+    registerBtn.innerHTML = "Create account";
+
+    switch (error.code) {
+
+        case "auth/email-already-in-use":
+            alert("An account already exists with this email.");
+            break;
+
+        case "auth/invalid-email":
+            alert("Invalid email address.");
+            break;
+
+        case "auth/weak-password":
+            alert("Password should be at least 6 characters.");
+            break;
+
+        default:
+            alert(error.message);
+
+    }
+
+}
 
 });
 
